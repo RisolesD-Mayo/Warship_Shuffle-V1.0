@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
+  Alert,
   Image,
   ImageBackground,
   StyleSheet,
@@ -10,16 +12,27 @@ import {
 } from "react-native";
 
 export default function HomeScreen() {
-  
-  // Fungsi untuk memeriksa status login sebelum pindah halaman
-const handleNavigation = async (targetRoute: "/beginner" | "/advanced") => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  // Periksa status login setiap kali halaman utama difokuskan kembali
+  useFocusEffect(
+    useCallback(() => {
+      const checkLoginStatus = async () => {
+        const userSession = await AsyncStorage.getItem("user_session");
+        setIsLoggedIn(userSession !== null);
+      };
+      checkLoginStatus();
+    }, [])
+  );
+
+  // Fungsi untuk memeriksa status login sebelum pindah ke halaman game
+  const handleNavigation = async (targetRoute: "/beginner" | "/advanced") => {
     try {
       const userSession = await AsyncStorage.getItem("user_session");
       
       if (userSession !== null) {
         router.push(targetRoute);
       } else {
-        // Tambahkan 'as any' di bagian pathname untuk melewati pengecekan ketat Expo Router sementara waktu
         router.push({
           pathname: "/login" as any, 
           params: { redirectTo: targetRoute }
@@ -27,9 +40,26 @@ const handleNavigation = async (targetRoute: "/beginner" | "/advanced") => {
       }
     } catch (error) {
       console.error("Gagal memeriksa sesi login:", error);
-      router.push("/login" as any); // Tambahkan 'as any' di sini juga
+      router.push("/login" as any);
     }
   };
+
+  // Fungsi untuk menangani proses Log Out
+  const handleLogOut = async () => {
+    Alert.alert("Log Out", "Apakah Anda yakin ingin keluar dari akun saat ini?", [
+      { text: "Batal", style: "cancel" },
+      {
+        text: "Keluar",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.removeItem("user_session");
+          setIsLoggedIn(false);
+          Alert.alert("Sukses", "Anda telah berhasil keluar.");
+        },
+      },
+    ]);
+  };
+
   return (
     <ImageBackground
       source={require("../assets/background2.png")}
@@ -42,7 +72,6 @@ const handleNavigation = async (targetRoute: "/beginner" | "/advanced") => {
           style={styles.logo}
         />
 
-        {/* Menggunakan fungsi handleNavigation untuk proteksi login */}
         <TouchableOpacity
           style={styles.button}
           onPress={() => handleNavigation("/beginner")}
@@ -57,13 +86,29 @@ const handleNavigation = async (targetRoute: "/beginner" | "/advanced") => {
           <Text style={styles.buttonText}>Advanced</Text>
         </TouchableOpacity>
 
-        {/* Leaderboard tetap bisa diakses langsung tanpa login */}
         <TouchableOpacity
           style={styles.button}
           onPress={() => router.push("/leaderboard")}
         >
           <Text style={styles.buttonText}>Leaderboard</Text>
         </TouchableOpacity>
+
+        {/* Tombol Dinamis: Menampilkan Log Out jika sudah login, Log In jika belum */}
+        {isLoggedIn ? (
+          <TouchableOpacity
+            style={[styles.button, styles.logoutButton]}
+            onPress={handleLogOut}
+          >
+            <Text style={[styles.buttonText, styles.logoutButtonText]}>Log Out</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.button, styles.loginButton]}
+            onPress={() => router.push("/login" as any)}
+          >
+            <Text style={[styles.buttonText, styles.loginButtonText]}>Log In</Text>
+          </TouchableOpacity>
+        )}
 
       </View>
     </ImageBackground>
@@ -95,5 +140,19 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 20,
     fontWeight: "bold",
+  },
+  // Style tambahan untuk tombol Log In agar terlihat kontras/menarik
+  loginButton: {
+    backgroundColor: "#28a745cc", // Hijau transparan
+  },
+  loginButtonText: {
+    color: "#ffffff",
+  },
+  // Style tambahan untuk tombol Log Out agar bernuansa peringatan
+  logoutButton: {
+    backgroundColor: "#dc3545cc", // Merah transparan
+  },
+  logoutButtonText: {
+    color: "#ffffff",
   },
 });
