@@ -2,12 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA_IXMkJ8H5XOqIK_Q9IrldVlDLG8JgJig",
-  authDomain: "azurlane-beta.firebaseapp.com",
-  projectId: "azurlane-beta",
-  storageBucket: "azurlane-beta.firebasestorage.app",
-  messagingSenderId: "95992262059",
-  appId: "1:95992262059:web:440ee2aa1fd39851ab36ee"
+  apiKey: "AIzaSyAE_OEaLR74Vg_M7xAW0DYGSP2LQtoVzjM",
+  authDomain: "uass-ded83.firebaseapp.com",
+  projectId: "uass-ded83",
+  storageBucket: "uass-ded83.firebasestorage.app",
+  messagingSenderId: "380216437571",
+  appId: "1:380216437571:web:c93306e6cf17c629295df6",
+  measurementId: "G-SKJZQZ79ZL"
 };
 
 const app = initializeApp(firebaseConfig);

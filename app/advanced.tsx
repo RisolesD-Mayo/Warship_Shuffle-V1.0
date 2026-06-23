@@ -2,8 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// Ganti pemanggilan API menjadi sumber data yang baru (cards 2)
-import { getCards2 } from '../src/api/cardApi'; 
 import { db } from '../src/config/firebase';
 import cardImages from '../src/constants/cardImages';
 import { Card } from '../src/types/cardType';
@@ -11,8 +9,7 @@ import { Card } from '../src/types/cardType';
 const { width } = Dimensions.get('window');
 const CARD_SIZE = (width - 40) / 4; 
 
-export default function BeginnerScreen() {
-  // Variabel state diubah menjadi cards2
+export default function AdvancedScreen() {
   const [cards2, setCards2] = useState<Card[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [score, setScore] = useState<number>(0);
@@ -36,15 +33,25 @@ export default function BeginnerScreen() {
   const loadAndShuffleCards = async () => {
     try {
       setLoading(true);
-      // Ambil data menggunakan API untuk cards 2
-      const data = await getCards2(); 
       
-      setCards2(shuffleArray(data)); 
+      // MEMBUAT DATA KARTU SECARA LOKAL (Tanpa API)
+      // Kita buat 35 kartu secara otomatis dari 36.png sampai 70.png
+const localData: Card[] = [];
+      for (let i = 36; i <= 70; i++) {
+        localData.push({
+          id: i,
+          nama: `Kartu ${i}`, 
+          local_image: `${i}.png`,
+          fraksi: 'Advanced' // <--- Tambahkan baris ini agar TypeScript tidak marah
+        });
+      }
+      
+      setCards2(shuffleArray(localData)); 
       setScore(0); 
       setClickedCards([]); 
       setGameOver(false);
     } catch (error) {
-      console.error("Gagal mengambil data kartu dari API:", error);
+      console.error("Gagal menyiapkan kartu:", error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +65,6 @@ export default function BeginnerScreen() {
     } else {
       setClickedCards(prev => [...prev, cardId]);
       setScore(prev => prev + 1);
-      // Acak posisi cards2
       setCards2(prevCards => shuffleArray(prevCards));
     }
   };
@@ -108,7 +114,7 @@ export default function BeginnerScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10 }}>Menyiapkan Kartu...</Text>
+        <Text style={{ marginTop: 10 }}>Menyiapkan Kartu Level Advanced...</Text>
       </View>
     );
   }
@@ -118,7 +124,7 @@ export default function BeginnerScreen() {
       <Text style={styles.scoreText}>Skor Saat Ini: {score}</Text>
       
       <FlatList
-        data={cards2} // FlatList sekarang membaca data dari state cards2
+        data={cards2} 
         keyExtractor={(item, index) => `${item.id}-${index}`}
         numColumns={4}
         renderItem={({ item }) => (
@@ -128,17 +134,16 @@ export default function BeginnerScreen() {
             onPress={() => handleCardClick(item.id)}
           >
             <Image 
-              source={cardImages[item.local_image] || require('../assets/cards/1.png')} 
+              source={cardImages[item.local_image] || require('../assets/cards2/36.png')} 
               style={styles.cardImage} 
             />
-            {/* Teks nama kartu sudah dihilangkan dari sini */}
           </TouchableOpacity>
         )}
       />
 
       <View style={styles.footer}>
         {gameOver && (
-          <Button title="Main Lagi (Reset API & Acak Ulang)" color="green" onPress={loadAndShuffleCards} />
+          <Button title="Main Lagi (Reset & Acak Ulang)" color="green" onPress={loadAndShuffleCards} />
         )}
       </View>
     </View>
@@ -151,14 +156,14 @@ const styles = StyleSheet.create({
   scoreText: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
   cardContainer: {
     width: CARD_SIZE,
-    height: CARD_SIZE, // Ukuran tinggi disamakan dengan lebar agar persegi (menghilangkan sisa ruang dari teks yang dihapus)
+    height: CARD_SIZE, 
     padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardImage: {
     width: '100%',
-    height: '100%', // Foto dibuat memenuhi seluruh kotak container
+    height: '100%', 
     borderRadius: 8,
     resizeMode: 'cover',
   },
